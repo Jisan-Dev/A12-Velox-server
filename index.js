@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.chn7ebi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 app.use(cors());
@@ -21,6 +21,7 @@ async function run() {
   try {
     const userCollection = client.db('VeloxDB').collection('users');
     const classCollection = client.db('VeloxDB').collection('class');
+    const trainersCollection = client.db('VeloxDB').collection('trainers');
 
     // to save a user data
     app.post('/users', async (req, res) => {
@@ -61,6 +62,19 @@ async function run() {
 
       const classes = await classCollection.countDocuments(query);
       res.send({ count: classes });
+    });
+
+    // to get all the trainers data
+    app.get('/trainers', async (req, res) => {
+      const trainers = await trainersCollection.find().toArray();
+      res.send(trainers);
+    });
+
+    // to get a specific trainer by _id
+    app.get('/trainers/:id', async (req, res) => {
+      const id = req.params.id;
+      const user = await trainersCollection.findOne({ _id: new ObjectId(id) });
+      res.send(user);
     });
 
     // Send a ping to confirm a successful connection
