@@ -66,7 +66,15 @@ async function run() {
 
     // to get all the trainers data
     app.get('/trainers', async (req, res) => {
-      const trainers = await trainersCollection.find().toArray();
+      const size = req.query?.size;
+
+      let query = trainersCollection.find();
+
+      if (size) {
+        query = trainersCollection.find().limit(parseInt(size));
+      }
+
+      const trainers = await query.toArray();
       res.send(trainers);
     });
 
