@@ -22,6 +22,7 @@ async function run() {
     const userCollection = client.db('VeloxDB').collection('users');
     const classCollection = client.db('VeloxDB').collection('class');
     const trainersCollection = client.db('VeloxDB').collection('trainers');
+    const testimonialsCollection = client.db('VeloxDB').collection('testimonials');
 
     // to save a user data
     app.post('/users', async (req, res) => {
@@ -83,6 +84,12 @@ async function run() {
       const id = req.params.id;
       const user = await trainersCollection.findOne({ _id: new ObjectId(id) });
       res.send(user);
+    });
+
+    // to get all testimonials data
+    app.get('/testimonials', async (req, res) => {
+      const testimonials = await testimonialsCollection.find().toArray();
+      res.send(testimonials);
     });
 
     // Send a ping to confirm a successful connection
