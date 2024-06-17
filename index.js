@@ -86,6 +86,13 @@ async function run() {
       res.send(user);
     });
 
+    // to get a specific trainer with specific slot selected by it's _id for booking page
+    app.get('/trainer-booking/:id', async (req, res) => {
+      const id = req.params.id;
+      const user = await trainersCollection.findOne({ 'availableSlotsDetails._id': new ObjectId(id) });
+      res.send(user);
+    });
+
     // to get all testimonials data
     app.get('/testimonials', async (req, res) => {
       const testimonials = await testimonialsCollection.find().toArray();
