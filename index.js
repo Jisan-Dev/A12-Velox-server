@@ -23,6 +23,7 @@ async function run() {
     const classCollection = client.db('VeloxDB').collection('class');
     const trainersCollection = client.db('VeloxDB').collection('trainers');
     const testimonialsCollection = client.db('VeloxDB').collection('testimonials');
+    const cartCollection = client.db('VeloxDB').collection('cart');
 
     // to save a user data
     app.post('/users', async (req, res) => {
@@ -97,6 +98,20 @@ async function run() {
     app.get('/testimonials', async (req, res) => {
       const testimonials = await testimonialsCollection.find().toArray();
       res.send(testimonials);
+    });
+
+    // to save a booking data
+    app.post('/addToCart', async (req, res) => {
+      const user = req.body;
+      const result = await cartCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // to get a booking data by email
+    app.get('/cart/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = await cartCollection.findOne({ 'user.email': email });
+      res.send(user);
     });
 
     // Send a ping to confirm a successful connection
