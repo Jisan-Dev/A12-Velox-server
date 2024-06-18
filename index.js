@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
+const stripe = require('stripe')('sk_test_51PL3tFCkMElpXPySRd553MHA7IdXTXCwIlyTDYBb8GESWcNFL9TU8uQriDdePdwknEPXR1KGmbiC7TU01FZNknpT00TDMDKHkD');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.chn7ebi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -112,6 +113,23 @@ async function run() {
       const email = req.params.email;
       const user = await cartCollection.findOne({ 'user.email': email });
       res.send(user);
+    });
+
+    // Payment Intent
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const floatedPrice = parseFloat(price).toFixed(2);
+      const amount = parseInt(floatedPrice * 100);
+      console.log(amount, 'amount inside intent');
+
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: 'usd',
+        payment_method_types: ['card'],
+      });
+
+      res.send({ clientSecret: paymentIntent.client_secret });
     });
 
     // Send a ping to confirm a successful connection
