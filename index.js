@@ -25,6 +25,7 @@ async function run() {
     const trainersCollection = client.db('VeloxDB').collection('trainers');
     const testimonialsCollection = client.db('VeloxDB').collection('testimonials');
     const cartCollection = client.db('VeloxDB').collection('cart');
+    const paymentCollection = client.db('VeloxDB').collection('payment');
 
     // to save a user data
     app.post('/users', async (req, res) => {
@@ -130,6 +131,19 @@ async function run() {
       });
 
       res.send({ clientSecret: paymentIntent.client_secret });
+    });
+
+    // to save a payment data
+    app.post('/payment/:email', async (req, res) => {
+      const user = req.body;
+      const userEmail = req.params?.email;
+      const paymentResult = await paymentCollection.insertOne(user);
+
+      // delete cart item
+      const query = { 'user.email': userEmail };
+      const deleteResult = await cartCollection.deleteMany(query);
+
+      res.send({ paymentResult, deleteResult });
     });
 
     // Send a ping to confirm a successful connection
