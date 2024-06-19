@@ -131,8 +131,9 @@ async function run() {
     });
 
     // to get a booking data by email
-    app.get('/cart/:email', async (req, res) => {
+    app.get('/cart/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
+      if (email !== req.decodedUser.email) return res.status(403).send({ message: 'forbidden access' });
       const user = await cartCollection.findOne({ 'user.email': email });
       res.send(user);
     });
