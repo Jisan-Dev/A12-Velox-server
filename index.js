@@ -157,15 +157,20 @@ async function run() {
 
     // to save a payment data
     app.post('/payment/:email', async (req, res) => {
-      const user = req.body;
+      const payment = req.body;
       const userEmail = req.params?.email;
-      const paymentResult = await paymentCollection.insertOne(user);
+      const paymentResult = await paymentCollection.insertOne(payment);
+
+      const classQuery = { title: { $in: payment.classes } };
+      const updateDoc = { $inc: { booking_count: 1 } };
+
+      const updateResult = await classCollection.updateMany(classQuery, updateDoc);
 
       // delete cart item
       const query = { 'user.email': userEmail };
       const deleteResult = await cartCollection.deleteMany(query);
 
-      res.send({ paymentResult, deleteResult });
+      res.send({ paymentResult, deleteResult, updateResult });
     });
 
     // Send a ping to confirm a successful connection
