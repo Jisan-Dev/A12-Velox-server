@@ -63,14 +63,23 @@ async function run() {
     app.get('/classes', async (req, res) => {
       const size = parseInt(req.query?.size);
       const page = parseInt(req.query?.page) - 1;
+      const sort = req.query?.sort;
       const search = req.query?.search;
+
+      if (sort) {
+        options = { sort: { booking_count: sort === 'asc' ? 1 : -1 } };
+        const classes = await classCollection.find({}, options).limit(6).toArray();
+        return res.send(classes);
+      }
 
       let query = {
         title: { $regex: search, $options: 'i' },
       };
 
+      let options = {};
+
       const classes = await classCollection
-        .find(query)
+        .find(query, options)
         .skip(size * page)
         .limit(size)
         .toArray();
