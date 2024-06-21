@@ -96,10 +96,48 @@ async function run() {
           $inc: { upVotes: -1 },
           $pull: { upVoteBy: userEmail },
         };
+      } else if (forum.downVoteBy?.includes(userEmail)) {
+        updateDoc = {
+          $inc: { upVotes: 1, downVotes: -1 },
+          $push: { upVoteBy: userEmail },
+          $pull: { downVoteBy: userEmail },
+        };
       } else {
         updateDoc = {
           $inc: { upVotes: 1 },
           $push: { upVoteBy: userEmail },
+        };
+      }
+
+      const result = await forumCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    // to update a forum post with down vote
+    app.put('/forum/:id/downVote', async (req, res) => {
+      const id = req.params.id;
+      const userEmail = req.query?.email;
+
+      const query = { _id: new ObjectId(id) };
+
+      let updateDoc = {};
+      const forum = await forumCollection.findOne(query);
+
+      if (forum.downVoteBy?.includes(userEmail)) {
+        updateDoc = {
+          $inc: { downVotes: -1 },
+          $pull: { downVoteBy: userEmail },
+        };
+      } else if (forum.upVoteBy?.includes(userEmail)) {
+        updateDoc = {
+          $inc: { upVotes: -1, downVotes: 1 },
+          $pull: { upVoteBy: userEmail },
+          $push: { downVoteBy: userEmail },
+        };
+      } else {
+        updateDoc = {
+          $inc: { downVotes: 1 },
+          $push: { downVoteBy: userEmail },
         };
       }
 
