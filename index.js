@@ -27,6 +27,7 @@ async function run() {
     const testimonialsCollection = client.db('VeloxDB').collection('testimonials');
     const cartCollection = client.db('VeloxDB').collection('cart');
     const paymentCollection = client.db('VeloxDB').collection('payment');
+    const forumCollection = client.db('VeloxDB').collection('forum');
 
     // to create jwt access token
     app.post('/jwt', async (req, res) => {
@@ -59,6 +60,22 @@ async function run() {
       res.send(result);
     });
 
+    // to get all forum post data
+    app.get('/forum', async (req, res) => {
+      const sort = req.query?.sort;
+      const size = parseInt(req.query?.size);
+
+      let options = {};
+      if (sort) {
+        options = { sort: { createdAt: sort === 'asc' ? 1 : -1 } };
+        const forum = await forumCollection.find({}, options).limit(size).toArray();
+        return res.send(forum);
+      }
+
+      const forum = await forumCollection.find({}).toArray();
+      res.send(forum);
+    });
+
     // to get all classes
     app.get('/classes', async (req, res) => {
       const size = parseInt(req.query?.size);
@@ -66,6 +83,7 @@ async function run() {
       const sort = req.query?.sort;
       const search = req.query?.search;
 
+      let options = {};
       if (sort) {
         options = { sort: { booking_count: sort === 'asc' ? 1 : -1 } };
         const classes = await classCollection.find({}, options).limit(6).toArray();
@@ -75,8 +93,6 @@ async function run() {
       let query = {
         title: { $regex: search, $options: 'i' },
       };
-
-      let options = {};
 
       const classes = await classCollection
         .find(query, options)
