@@ -76,6 +76,37 @@ async function run() {
       res.send(forum);
     });
 
+    // to get a specific forum post by _id
+    app.get('/forum/:id', async (req, res) => {
+      const id = req.params.id;
+      const forum = await forumCollection.findOne({ _id: new ObjectId(id) });
+      res.send(forum);
+    });
+
+    // to update a forum post with upVote
+    app.put('/forum/:id/upVote', async (req, res) => {
+      const id = req.params.id;
+      const userEmail = req.query?.email;
+      const query = { _id: new ObjectId(id) };
+
+      let updateDoc = {};
+      const forum = await forumCollection.findOne(query);
+      if (forum.upVoteBy?.includes(userEmail)) {
+        updateDoc = {
+          $inc: { upVotes: -1 },
+          $pull: { upVoteBy: userEmail },
+        };
+      } else {
+        updateDoc = {
+          $inc: { upVotes: 1 },
+          $push: { upVoteBy: userEmail },
+        };
+      }
+
+      const result = await forumCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
     // to get all classes
     app.get('/classes', async (req, res) => {
       const size = parseInt(req.query?.size);
