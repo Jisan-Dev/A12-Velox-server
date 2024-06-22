@@ -29,6 +29,7 @@ async function run() {
     const paymentCollection = client.db('VeloxDB').collection('payment');
     const forumCollection = client.db('VeloxDB').collection('forum');
     const appliedTrainerCollection = client.db('VeloxDB').collection('appliedTrainers');
+    const subscriberCollection = client.db('VeloxDB').collection('subscribers');
 
     // to create jwt access token
     app.post('/jwt', async (req, res) => {
@@ -265,6 +266,19 @@ async function run() {
       const updateDoc = { $push: { availableSlotsDetails: slot } };
       const result = await trainersCollection.updateOne(query, updateDoc);
       res.send(result);
+    });
+
+    // to save all subscribers
+    app.post('/subscribers', async (req, res) => {
+      const subscriber = req.body;
+      const result = await subscriberCollection.insertOne(subscriber);
+      res.send(result);
+    });
+
+    // to get all subscribers data
+    app.get('/subscribers', async (req, res) => {
+      const subscribers = await subscriberCollection.find().toArray();
+      res.send(subscribers);
     });
 
     // to get all testimonials data
