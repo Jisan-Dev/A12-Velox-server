@@ -234,6 +234,13 @@ async function run() {
       res.send(user);
     });
 
+    // to get a specific trainer by email
+    app.get('/trainer/:email', verifyToken, async (req, res) => {
+      const email = req.params?.email;
+      const user = await trainersCollection.findOne({ email: email });
+      res.send(user);
+    });
+
     // to get a specific trainer with specific slot selected by it's _id for booking page
     app.get('/trainer-booking/:id', async (req, res) => {
       const id = req.params.id;
