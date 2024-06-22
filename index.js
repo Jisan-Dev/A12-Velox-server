@@ -179,7 +179,7 @@ async function run() {
       }
 
       let query = {
-        title: { $regex: search, $options: 'i' },
+        title: { $regex: search ?? '', $options: 'i' },
       };
 
       const classes = await classCollection
@@ -235,7 +235,7 @@ async function run() {
     });
 
     // to get a specific trainer by email
-    app.get('/trainer/:email', verifyToken, async (req, res) => {
+    app.get('/trainer/:email', async (req, res) => {
       const email = req.params?.email;
       const user = await trainersCollection.findOne({ email: email });
       res.send(user);
@@ -255,6 +255,16 @@ async function run() {
       const id = req.params.id;
       const user = await trainersCollection.findOne({ 'availableSlotsDetails._id': new ObjectId(id) });
       res.send(user);
+    });
+
+    // to add new object into a trainer data's availableSlotsDetails array
+    app.put('/availableSlotDetails/:id', verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const slot = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = { $push: { availableSlotsDetails: slot } };
+      const result = await trainersCollection.updateOne(query, updateDoc);
+      res.send(result);
     });
 
     // to get all testimonials data
