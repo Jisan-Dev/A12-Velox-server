@@ -84,6 +84,26 @@ async function run() {
       res.send(user);
     });
 
+    // to update a user role into trainer, query by email
+    app.put('/users/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      console.log(user);
+      const result = await userCollection.updateOne({ email: email }, { $set: user });
+      // change status to "Accepted" in appliedTrainers collection
+      await appliedTrainerCollection.updateOne({ email: email }, { $set: { status: 'Accepted' } });
+      res.send(result);
+    });
+    app.put('/users/reject/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      console.log(user);
+      const result = await userCollection.updateOne({ email: email }, { $set: user });
+      // change status to "Accepted" in appliedTrainers collection
+      await appliedTrainerCollection.updateOne({ email: email }, { $set: { status: 'Rejected' } });
+      res.send(result);
+    });
+
     // to get all forum post data
     app.get('/forum', async (req, res) => {
       const sort = req.query?.sort;
