@@ -241,6 +241,15 @@ async function run() {
       res.send(user);
     });
 
+    // to delete a availableSlotDetails by _id that is inside an trainer object
+    app.delete('/availableSlotDetails/:id', verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { 'availableSlotsDetails._id': new ObjectId(id) };
+      const updateDoc = { $pull: { availableSlotsDetails: { _id: new ObjectId(id) } } };
+      const result = await trainersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
     // to get a specific trainer with specific slot selected by it's _id for booking page
     app.get('/trainer-booking/:id', async (req, res) => {
       const id = req.params.id;
