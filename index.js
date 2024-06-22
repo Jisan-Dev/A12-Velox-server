@@ -218,6 +218,12 @@ async function run() {
       res.send(result);
     });
 
+    // to get all applied trainers data
+    app.get('/applied-trainers', verifyToken, async (req, res) => {
+      const appliedTrainers = await appliedTrainerCollection.find().toArray();
+      res.send(appliedTrainers);
+    });
+
     // to get all the trainers data
     app.get('/trainers', async (req, res) => {
       const size = req.query?.size;
@@ -356,8 +362,8 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 });
-    console.log('Pinged your deployment. You successfully connected to MongoDB!');
+    // await client.db('admin').command({ ping: 1 });
+    // console.log('Pinged your deployment. You successfully connected to MongoDB!');
   } finally {
   }
 }
