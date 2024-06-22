@@ -28,6 +28,7 @@ async function run() {
     const cartCollection = client.db('VeloxDB').collection('cart');
     const paymentCollection = client.db('VeloxDB').collection('payment');
     const forumCollection = client.db('VeloxDB').collection('forum');
+    const appliedTrainerCollection = client.db('VeloxDB').collection('appliedTrainers');
 
     // to create jwt access token
     app.post('/jwt', async (req, res) => {
@@ -181,6 +182,13 @@ async function run() {
 
       const classes = await classCollection.countDocuments(query);
       res.send({ count: classes });
+    });
+
+    // to save applied-trainer data
+    app.post('/applied-trainer', verifyToken, async (req, res) => {
+      const requestedUser = req.body;
+      const result = await appliedTrainerCollection.insertOne(requestedUser);
+      res.send(result);
     });
 
     // to get all the trainers data
