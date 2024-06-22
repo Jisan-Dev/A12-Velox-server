@@ -61,6 +61,17 @@ async function run() {
       res.send(result);
     });
 
+    // to get all users
+    app.get('/users', verifyToken, async (req, res) => {
+      const status = req.query?.status;
+      let query = {};
+      if (status) {
+        query = { status: status };
+      }
+      const users = await userCollection.find(query).toArray();
+      res.send(users);
+    });
+
     // to get a specific user by email
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
