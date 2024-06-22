@@ -71,7 +71,7 @@ async function run() {
       const status = req.query?.status;
       let query = {};
       if (status) {
-        query = { status: status };
+        query = { status: { $in: ['Pending', 'Rejected'] } };
       }
       const users = await userCollection.find(query).toArray();
       res.send(users);
@@ -92,6 +92,11 @@ async function run() {
       const result = await userCollection.updateOne({ email: email }, { $set: user });
       // change status to "Accepted" in appliedTrainers collection
       await appliedTrainerCollection.updateOne({ email: email }, { $set: { status: 'Accepted' } });
+      const trainerObj = await appliedTrainerCollection.findOne({ email });
+      // now insert the trainerObj into trainerCollection
+      if (trainerObj) {
+        await trainersCollection.insertOne(trainerObj);
+      }
       res.send(result);
     });
     app.put('/users/reject/:email', async (req, res) => {
@@ -270,6 +275,17 @@ async function run() {
       const email = req.params?.email;
       const user = await trainersCollection.findOne({ email: email });
       res.send(user);
+    });
+
+    // to delete a trainer data & change the role from trainer to member in userCollection and appliedTrainerCollection
+    app.delete('/trainers/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const result = await trainersCollection.deleteOne({ email });
+      const userQuery = { email };
+      const updateDoc = { $set: { role: 'member', status: 'Rejected' } };
+      await userCollection.updateOne(userQuery, updateDoc);
+      await appliedTrainerCollection.updateOne(userQuery, updateDoc);
+      res.send(result);
     });
 
     // to delete a availableSlotDetails by _id that is inside an trainer object
