@@ -262,6 +262,20 @@ async function run() {
       res.send(user);
     });
 
+    // to get booked trainers by user email
+    app.get('/booked-trainers/:email', async (req, res) => {
+      const email = req.params.email;
+      // if (email !== req.decodedUser.email) return res.status(403).send({ message: 'forbidden access' });
+      const paidUser = await paymentCollection.find({ email }).toArray();
+      const bookedTrainers = paidUser.map((item) => item.bookedTrainerId);
+
+      // now get all the trainer objects from trainerCollection based on the _id existed in bookTrainers array
+      const objectIdArray = bookedTrainers.map((id) => new ObjectId(id));
+      const query = { _id: { $in: objectIdArray } };
+      const trainers = await trainersCollection.find(query).toArray();
+      res.send(trainers);
+    });
+
     // Payment Intent
     app.post('/create-payment-intent', async (req, res) => {
       const { price } = req.body;
