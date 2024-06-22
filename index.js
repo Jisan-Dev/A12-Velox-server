@@ -61,6 +61,13 @@ async function run() {
       res.send(result);
     });
 
+    // to get a specific user by email
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email: email });
+      res.send(user);
+    });
+
     // to get all forum post data
     app.get('/forum', async (req, res) => {
       const sort = req.query?.sort;
@@ -188,6 +195,10 @@ async function run() {
     app.post('/applied-trainer', verifyToken, async (req, res) => {
       const requestedUser = req.body;
       const result = await appliedTrainerCollection.insertOne(requestedUser);
+
+      const userQuery = { email: requestedUser?.email };
+      const updateDoc = { $set: { status: 'Pending' } };
+      await userCollection.updateOne(userQuery, updateDoc);
       res.send(result);
     });
 
