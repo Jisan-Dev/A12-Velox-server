@@ -129,6 +129,7 @@ async function run() {
     app.get('/forum', async (req, res) => {
       const sort = req.query?.sort;
       const size = parseInt(req.query?.size);
+      const page = parseInt(req.query?.page) - 1;
 
       let options = {};
       if (sort) {
@@ -137,8 +138,18 @@ async function run() {
         return res.send(forum);
       }
 
-      const forum = await forumCollection.find({}).toArray();
+      const forum = await forumCollection
+        .find({})
+        .skip(size * page)
+        .limit(6)
+        .toArray();
       res.send(forum);
+    });
+
+    // to get all forum count
+    app.get('/forums-count', async (req, res) => {
+      const classes = await classCollection.countDocuments();
+      res.send({ count: classes });
     });
 
     // to get a specific forum post by _id
