@@ -105,7 +105,7 @@ async function run() {
       console.log(user);
       const result = await userCollection.updateOne({ email: email }, { $set: user });
       // change status to "Accepted" in appliedTrainers collection
-      await appliedTrainerCollection.updateOne({ email: email }, { $set: { status: 'Rejected' } });
+      await appliedTrainerCollection.deleteOne({ email: email });
       res.send(result);
     });
 
@@ -232,9 +232,21 @@ async function run() {
       res.send({ count: classes });
     });
 
+    // to save a class data
+    app.post('/add-class', verifyToken, async (req, res) => {
+      const classData = req.body;
+      const result = await classCollection.insertOne(classData);
+      res.send(result);
+    });
+
     // to save applied-trainer data
     app.post('/applied-trainer', verifyToken, async (req, res) => {
       const requestedUser = req.body;
+      // find is already existed in appliedTrainerCollection by requestedUser.email
+      const isExist = await appliedTrainerCollection.findOne({ email: requestedUser?.email });
+      if (isExist) {
+        return res.send({ message: 'user already exists', insertedId: null });
+      }
       const result = await appliedTrainerCollection.insertOne(requestedUser);
 
       const userQuery = { email: requestedUser?.email };
