@@ -55,6 +55,22 @@ async function run() {
       });
     };
 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decodedUser.email;
+      const user = await userCollection.findOne({ email: email });
+      const isAdmin = user.role === 'admin';
+      if (!isAdmin) return res.status(403).send('forbidden access');
+      next();
+    };
+
+    const verifyTrainer = async (req, res, next) => {
+      const email = req.decodedUser.email;
+      const user = await userCollection.findOne({ email: email });
+      const isAdmin = user.role === 'trainer';
+      if (!isAdmin) return res.status(403).send('forbidden access');
+      next();
+    };
+
     // to save a user data
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -85,7 +101,7 @@ async function run() {
     });
 
     // to update a user role into trainer, query by email
-    app.put('/users/:email', async (req, res) => {
+    app.put('/users/:email', verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       console.log(user);
@@ -99,7 +115,7 @@ async function run() {
       }
       res.send(result);
     });
-    app.put('/users/reject/:email', async (req, res) => {
+    app.put('/users/reject/:email', verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       console.log(user);
@@ -132,8 +148,15 @@ async function run() {
       res.send(forum);
     });
 
+    // to save a forum data
+    app.post('/forum', verifyToken, async (req, res) => {
+      const forum = req.body;
+      const result = await forumCollection.insertOne(forum);
+      res.send(result);
+    });
+
     // to update a forum post with upVote
-    app.put('/forum/:id/upVote', async (req, res) => {
+    app.put('/forum/:id/upVote', verifyToken, async (req, res) => {
       const id = req.params.id;
       const userEmail = req.query?.email;
       const query = { _id: new ObjectId(id) };
@@ -163,7 +186,7 @@ async function run() {
     });
 
     // to update a forum post with down vote
-    app.put('/forum/:id/downVote', async (req, res) => {
+    app.put('/forum/:id/downVote', verifyToken, async (req, res) => {
       const id = req.params.id;
       const userEmail = req.query?.email;
 
@@ -233,7 +256,7 @@ async function run() {
     });
 
     // to save a class data
-    app.post('/add-class', verifyToken, async (req, res) => {
+    app.post('/add-class', verifyToken, verifyAdmin, async (req, res) => {
       const classData = req.body;
       const result = await classCollection.insertOne(classData);
       res.send(result);
@@ -256,7 +279,7 @@ async function run() {
     });
 
     // to get all applied trainers data
-    app.get('/applied-trainers', verifyToken, async (req, res) => {
+    app.get('/applied-trainers', verifyToken, verifyAdmin, async (req, res) => {
       const appliedTrainers = await appliedTrainerCollection.find().toArray();
       res.send(appliedTrainers);
     });
@@ -290,7 +313,7 @@ async function run() {
     });
 
     // to delete a trainer data & change the role from trainer to member in userCollection and appliedTrainerCollection
-    app.delete('/trainers/:email', verifyToken, async (req, res) => {
+    app.delete('/trainers/:email', verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const result = await trainersCollection.deleteOne({ email });
       const userQuery = { email };
@@ -301,7 +324,7 @@ async function run() {
     });
 
     // to delete a availableSlotDetails by _id that is inside an trainer object
-    app.delete('/availableSlotDetails/:id', verifyToken, async (req, res) => {
+    app.delete('/availableSlotDetails/:id', verifyToken, verifyTrainer, async (req, res) => {
       const id = req.params.id;
       const query = { 'availableSlotsDetails._id': new ObjectId(id) };
       const updateDoc = { $pull: { availableSlotsDetails: { _id: new ObjectId(id) } } };
@@ -320,6 +343,7 @@ async function run() {
     app.put('/availableSlotDetails/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const slot = req.body;
+      slot._id = new ObjectId();
       const query = { _id: new ObjectId(id) };
       const updateDoc = { $push: { availableSlotsDetails: slot } };
       const result = await trainersCollection.updateOne(query, updateDoc);
@@ -334,7 +358,7 @@ async function run() {
     });
 
     // to get all subscribers data
-    app.get('/subscribers', async (req, res) => {
+    app.get('/subscribers', verifyToken, verifyAdmin, async (req, res) => {
       const subscribers = await subscriberCollection.find().toArray();
       res.send(subscribers);
     });
@@ -361,7 +385,7 @@ async function run() {
     });
 
     // to get booked trainers by user email
-    app.get('/booked-trainers/:email', async (req, res) => {
+    app.get('/booked-trainers/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       // if (email !== req.decodedUser.email) return res.status(403).send({ message: 'forbidden access' });
       const paidUser = await paymentCollection.find({ email }).toArray();
@@ -407,6 +431,35 @@ async function run() {
       const deleteResult = await cartCollection.deleteMany(query);
 
       res.send({ paymentResult, deleteResult, updateResult });
+    });
+
+    // to get all payment data
+    app.get('/payments', verifyToken, verifyAdmin, async (req, res) => {
+      options = { sort: { date: -1 } };
+      const payments = await paymentCollection.find({}, options).limit(6).toArray();
+      res.send(payments);
+    });
+
+    // to get stats or analytics for admin dashboard
+    app.get('/admin-stats', verifyToken, verifyAdmin, async (req, res) => {
+      const orders = await paymentCollection.estimatedDocumentCount();
+      const subscribers = await subscriberCollection.estimatedDocumentCount();
+
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              totalRevenue: { $sum: '$amount' },
+            },
+          },
+        ])
+        .toArray();
+
+      console.log(result);
+      const revenue = result.length > 0 ? result[0].totalRevenue : 0;
+      console.log(revenue);
+      res.send({ revenue, orders, subscribers });
     });
 
     // Send a ping to confirm a successful connection
