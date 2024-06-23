@@ -94,7 +94,7 @@ async function run() {
     });
 
     // to get a specific user by email
-    app.get('/users/:email', async (req, res) => {
+    app.get('/users/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email: email });
       res.send(user);
